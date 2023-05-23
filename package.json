@@ -1,0 +1,15 @@
+{
+  "name": "hackernew",
+  "version": "1.0.0",
+  "description": "js + ts study project",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ohdal",
+  "license": "ISC",
+  "devDependencies": {
+    "parcel": "^2.8.3",
+    "typescript": "^5.0.4"
+  }
+}
