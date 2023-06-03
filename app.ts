@@ -41,15 +41,35 @@ const store : Store = {
   feed: [],
 };
 
-const ajax : XMLHttpRequest = new XMLHttpRequest();
+class Api {
+  url: string;
+  ajax: XMLHttpRequest;
 
-// Generic
-const getData = <AjaxResponse>(url: string) : AjaxResponse => {
-  ajax.open("GET", url, false);
-  ajax.send();
+  constructor(url: string) {
+    this.url = url;
+    this.ajax = new XMLHttpRequest();
+  }
 
-  return JSON.parse(ajax.response);
-};
+  // Generic & protected
+  protected getRequest<AjaxResponse>(): AjaxResponse {
+    this.ajax.open('GET', this.url, false);
+    this.ajax.send();
+
+    return JSON.parse(this.ajax.response);
+  }
+}
+
+class NewsFeedApi extends Api{
+  getData(): NewsFeed[] {
+    return this.getRequest<NewsFeed[]>();
+  }
+}
+
+class NewsDetailApi extends Api {
+  getData(): NewsDetail {
+    return this.getRequest<NewsDetail>();
+  }
+}
 
 function makeFeeds(feeds: NewsFeed[]) : NewsFeed[] {
   for (let i = 0; i < feeds.length; i++) {
@@ -68,6 +88,7 @@ function updateView(html: string): void {
 }
 
 function newsFeed(): void {
+  const api = new NewsFeedApi(NEWS_URL);
   let newsFeed: NewsFeed[] = store.feed;
   const newsList = [];
   const pageSize = 10;
@@ -75,7 +96,7 @@ function newsFeed(): void {
 
   console.log(newsFeed)
   if (newsFeed.length === 0) {
-    newsFeed = store.feed = makeFeeds(getData<NewsFeed[]>(NEWS_URL));
+    newsFeed = store.feed = makeFeeds(api.getData());
   }
 
   totalPages = Math.floor(newsFeed.length / pageSize) + (newsFeed.length % pageSize > 0 ? 1 : 0);
@@ -137,7 +158,8 @@ function newsFeed(): void {
 
 function newsDetail(): void {
   const id = location.hash.substring(7);
-  const newsContent = getData<NewsDetail>(CONTENT_URL.replace("@id", id));
+  const api = new NewsDetailApi(CONTENT_URL.replace("@id", id));
+  const newsContent = api.getData();
 
   let template = `
     <div class="bg-gray-600 min-h-screen">
