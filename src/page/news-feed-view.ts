@@ -36,26 +36,18 @@ export default class NewsFeedView extends View {
     this.totalPages = 1;
     this.pageSize = 10;
   }
-  
-  render() {
-    this.store.currentPage = Number(location.hash.substring(7)) || 1;
 
-    if(!this.store.hasFeeds) {
-      this.api.getDataWithPromise((feeds: NewsFeed[]) => {
-        this.store.setFeeds(feeds);
-        this.totalPages =Math.floor(this.store.numberOfFeed / this.pageSize) +(this.store.numberOfFeed % this.pageSize > 0 ? 1 : 0);
-        this.renderView();
-      })
+  async render() {
+    this.store.currentPage = Number(location.hash.substring(7));
 
-      return;
+    if (!this.store.hasFeeds) {
+      this.store.setFeeds(await this.api.getData());
+      this.totalPages =
+        Math.floor(this.store.numberOfFeed / this.pageSize) + (this.store.numberOfFeed % this.pageSize > 0 ? 1 : 0);
     }
 
-    this.renderView();
-  }
-  
-  private renderView() {
     let page = this.store.currentPage - 1;
-  
+
     for (let i = page * this.pageSize; i < (page + 1) * this.pageSize; i++) {
       const { id, title, comments_count, user, points, time_ago, read } = this.store.getFeed(i);
       this.addHtml(`
@@ -80,26 +72,21 @@ export default class NewsFeedView extends View {
       </div>
       `);
     }
-  
+
     this.setTemplatedata("news_feed", this.getHtml());
     this.setTemplatedata(
       "prev_page",
       `<a href="#/page/${this.store.prevPage}" class="${
-        this.store.currentPage > 1
-          ? "text-gray-500"
-          : "pointer-events-none text-gray-200"
+        this.store.currentPage > 1 ? "text-gray-500" : "pointer-events-none text-gray-200"
       }">Previous</a>`
     );
     this.setTemplatedata(
       "next_page",
       `<a href="#/page/${this.store.nextPage}" class="ml-4 ${
-        this.store.currentPage < this.totalPages
-          ? "text-gray-500"
-          : "pointer-events-none text-gray-200"
+        this.store.currentPage < this.totalPages ? "text-gray-500" : "pointer-events-none text-gray-200"
       }">Next</a>`
     );
-  
-    this.updateView();
 
+    this.updateView();
   }
 }

@@ -3,43 +3,23 @@ import { NEWS_URL, CONTENT_URL } from "../config";
 
 export class Api {
   // Generic & protected
-  protected getRequestWithXHR<AjaxResponse>(url: string, cb: (data: AjaxResponse) => void): void {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url);
-    xhr.addEventListener("load", () => {
-      cb(JSON.parse(xhr.response) as AjaxResponse);
-    });
-    xhr.send();
-  }
+  protected async request<AjaxResponse>(url: string): Promise<AjaxResponse> {
+    const response = await fetch(url);
 
-  protected getRequestWithPromise<AjaxResponse>(url: string, cb: (data: AjaxResponse) => void): void {
-    fetch(url)
-      .then((response) => response.json()) // 비동기적으로 json을 객체화해서 바꾼다.
-      .then(cb)
-      .catch(() => {
-        console.error("데이터를 받아오지 못했습니다.");
-      });
+    // response.json 자체가 promise 객체를 return 하기 때문에 await을 붙여준다.
+    return await response.json() as AjaxResponse;
   }
 }
 
 export class NewsFeedApi {
-  getDataWithXHR(cb: (data: NewsFeed[]) => void): void {
-    this.printHello();
-    this.getRequestWithXHR<NewsFeed[]>(NEWS_URL, cb);
-  }
-  
-  getDataWithPromise(cb: (data: NewsFeed[]) => void): void {
-    this.getRequestWithPromise<NewsFeed[]>(NEWS_URL, cb);
+  async getData(): Promise<NewsFeed[]> {
+    return this.request<NewsFeed[]>(NEWS_URL);
   }
 }
 
 export class NewsDetailApi {
-  getDataWithXHR(id: string, cb: (data: NewsDetail) => void): void {
-    this.getRequestWithXHR<NewsDetail>(CONTENT_URL.replace("@id", id), cb);
-  }
-  
-  getDataWithPromise(id: string, cb: (data: NewsDetail) => void): void {
-    this.getRequestWithPromise<NewsDetail>(CONTENT_URL.replace("@id", id), cb);
+  async getData(id: string): Promise<NewsDetail> {
+    return await this.request<NewsDetail>(CONTENT_URL.replace("@id", id));
   }
 }
 

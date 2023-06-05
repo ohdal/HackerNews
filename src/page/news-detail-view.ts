@@ -42,19 +42,19 @@ export default class NewsDetailView extends View {
     this.store = store;
   }
 
-  render() {
+  // Promise 객체를 반환하지 않지만 async 함수 이기 떄문에 
+  // return을 Promise로 감싸줘야 한다.
+  async render(): Promise<void> {
     const id = location.hash.substring(7);
-    this.api.getDataWithPromise(id, (data: NewsDetail) => {
-      const { title, content, comments } = data;
+    const {title, content, comments} = await this.api.getData(id);
+    
+    this.store.makeRead(Number(id));
+    this.setTemplatedata("comments", this.makeComment(comments));
+    this.setTemplatedata("current_page", String(this.store.currentPage));
+    this.setTemplatedata("title", title);
+    this.setTemplatedata("content", content);
 
-      this.store.makeRead(Number(id));
-      this.setTemplatedata("comments", this.makeComment(comments));
-      this.setTemplatedata("current_page", String(this.store.currentPage));
-      this.setTemplatedata("title", title);
-      this.setTemplatedata("content", content);
-
-      this.updateView();
-    });
+    this.updateView();
   }
 
   private makeComment(comments: NewsComment[]): string {
