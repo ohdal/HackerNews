@@ -4,7 +4,6 @@ import { NewsFeed, NewsStore } from "../types";
 
 export default class NewsFeedView extends View {
   private api: NewsFeedApi;
-  private feeds: NewsFeed[];
   private totalPages: number;
   private pageSize: number;
   private store: NewsStore;
@@ -12,48 +11,53 @@ export default class NewsFeedView extends View {
   constructor(containerId: string, store: NewsStore) {
     let template = `
     <div class="bg-gray-600 min-h-screen">
-    <div class="bg-white text-xl">
-    <div class="mx-auto px-4">
-    <div class="flex justify-between items-center py-6">
-    <div class="flex justify-start">
-    <h1 class="font-extrabold">Hacker News</h1>
-    </div>
-    <div class="item-center justify-end">
-    {{__prev_page__}}
-    {{__next_page__}}
-    </div>
-    </div>
-    </div>
-    </div>
-    <div class="p-4 text-2xl text-gray-700">
-    {{__news_feed__}}
-    </div>
+      <div class="bg-white text-xl">
+        <div class="mx-auto px-4">
+          <div class="flex justify-between items-center py-6">
+            <div class="flex justify-start">
+              <h1 class="font-extrabold">Hacker News</h1>
+            </div>
+            <div class="item-center justify-end">
+              {{__prev_page__}}
+              {{__next_page__}}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-4 text-2xl text-gray-700">
+        {{__news_feed__}}
+      </div>
     </div>
     `;
 
     super(containerId, template);
     this.api = new NewsFeedApi();
     this.store = store;
-    this.feeds = this.store.getAllFeeds();
     this.totalPages = 1;
     this.pageSize = 10;
-    
-    if (!this.store.hasFeeds) {
-      this.store.setFeeds(this.api.getData());
-      this.feeds = this.store.getAllFeeds();
-    }
-
-    this.totalPages =
-      Math.floor(this.feeds.length / this.pageSize) +
-      (this.feeds.length % this.pageSize > 0 ? 1 : 0);
   }
-
+  
   render() {
     this.store.currentPage = Number(location.hash.substring(7)) || 1;
-    let page = this.store.currentPage - 1;
 
+    if(!this.store.hasFeeds) {
+      this.api.getData((feeds: NewsFeed[]) => {
+        this.store.setFeeds(feeds);
+        this.totalPages =Math.floor(this.store.numberOfFeed / this.pageSize) +(this.store.numberOfFeed % this.pageSize > 0 ? 1 : 0);
+        this.renderView();
+      })
+      
+      return;
+    }
+
+    this.renderView();
+  }
+  
+  private renderView() {
+    let page = this.store.currentPage - 1;
+  
     for (let i = page * this.pageSize; i < (page + 1) * this.pageSize; i++) {
-      const { id, title, comments_count, user, points, time_ago, read } = this.feeds[i];
+      const { id, title, comments_count, user, points, time_ago, read } = this.store.getFeed(i);
       this.addHtml(`
       <div class="p-6 ${
         read ? "bg-red" : "bg-white"
@@ -76,7 +80,7 @@ export default class NewsFeedView extends View {
       </div>
       `);
     }
-
+  
     this.setTemplatedata("news_feed", this.getHtml());
     this.setTemplatedata(
       "prev_page",
@@ -94,7 +98,8 @@ export default class NewsFeedView extends View {
           : "pointer-events-none text-gray-200"
       }">Next</a>`
     );
-
+  
     this.updateView();
+
   }
 }

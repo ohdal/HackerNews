@@ -3,25 +3,26 @@ import {NEWS_URL, CONTENT_URL} from "../config"
 
 export class Api {
   // Generic & protected
-  protected getRequest<AjaxResponse>(url: string): AjaxResponse {
+  protected getRequest<AjaxResponse>(url: string, cb: (data: AjaxResponse) => void): void {
     const ajax = new XMLHttpRequest();
-    ajax.open("GET", url, false);
+    ajax.open("GET", url);
+    ajax.addEventListener('load', () => {
+      cb(JSON.parse(ajax.response) as AjaxResponse);
+    })
     ajax.send();
-
-    return JSON.parse(ajax.response);
   }
 }
 
 export class NewsFeedApi {
-  getData(): NewsFeed[] {
+  getData(cb: (data: NewsFeed[]) => void): NewsFeed[] {
     this.printHello();
-    return this.getRequest<NewsFeed[]>(NEWS_URL);
+    return this.getRequest<NewsFeed[]>(NEWS_URL, cb);
   }
 }
 
 export class NewsDetailApi {
-  getData(id: string): NewsDetail {
-    return this.getRequest<NewsDetail>(CONTENT_URL.replace("@id", id));
+  getData(id: string, cb: (data: NewsDetail) => void): NewsDetail {
+    return this.getRequest<NewsDetail>(CONTENT_URL.replace("@id", id), cb);
   }
 }
 
