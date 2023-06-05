@@ -41,12 +41,12 @@ export default class NewsFeedView extends View {
     this.store.currentPage = Number(location.hash.substring(7)) || 1;
 
     if(!this.store.hasFeeds) {
-      this.api.getData((feeds: NewsFeed[]) => {
+      this.api.getDataWithPromise((feeds: NewsFeed[]) => {
         this.store.setFeeds(feeds);
         this.totalPages =Math.floor(this.store.numberOfFeed / this.pageSize) +(this.store.numberOfFeed % this.pageSize > 0 ? 1 : 0);
         this.renderView();
       })
-      
+
       return;
     }
 

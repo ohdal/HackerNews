@@ -1,28 +1,45 @@
-import {NewsFeed, NewsDetail} from '../types'
-import {NEWS_URL, CONTENT_URL} from "../config"
+import { NewsFeed, NewsDetail } from "../types";
+import { NEWS_URL, CONTENT_URL } from "../config";
 
 export class Api {
   // Generic & protected
-  protected getRequest<AjaxResponse>(url: string, cb: (data: AjaxResponse) => void): void {
-    const ajax = new XMLHttpRequest();
-    ajax.open("GET", url);
-    ajax.addEventListener('load', () => {
-      cb(JSON.parse(ajax.response) as AjaxResponse);
-    })
-    ajax.send();
+  protected getRequestWithXHR<AjaxResponse>(url: string, cb: (data: AjaxResponse) => void): void {
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", url);
+    xhr.addEventListener("load", () => {
+      cb(JSON.parse(xhr.response) as AjaxResponse);
+    });
+    xhr.send();
+  }
+
+  protected getRequestWithPromise<AjaxResponse>(url: string, cb: (data: AjaxResponse) => void): void {
+    fetch(url)
+      .then((response) => response.json()) // 비동기적으로 json을 객체화해서 바꾼다.
+      .then(cb)
+      .catch(() => {
+        console.error("데이터를 받아오지 못했습니다.");
+      });
   }
 }
 
 export class NewsFeedApi {
-  getData(cb: (data: NewsFeed[]) => void): void {
+  getDataWithXHR(cb: (data: NewsFeed[]) => void): void {
     this.printHello();
-    this.getRequest<NewsFeed[]>(NEWS_URL, cb);
+    this.getRequestWithXHR<NewsFeed[]>(NEWS_URL, cb);
+  }
+  
+  getDataWithPromise(cb: (data: NewsFeed[]) => void): void {
+    this.getRequestWithPromise<NewsFeed[]>(NEWS_URL, cb);
   }
 }
 
 export class NewsDetailApi {
-  getData(id: string, cb: (data: NewsDetail) => void): void {
-    this.getRequest<NewsDetail>(CONTENT_URL.replace("@id", id), cb);
+  getDataWithXHR(id: string, cb: (data: NewsDetail) => void): void {
+    this.getRequestWithXHR<NewsDetail>(CONTENT_URL.replace("@id", id), cb);
+  }
+  
+  getDataWithPromise(id: string, cb: (data: NewsDetail) => void): void {
+    this.getRequestWithPromise<NewsDetail>(CONTENT_URL.replace("@id", id), cb);
   }
 }
 
@@ -41,10 +58,7 @@ export class Test {
 function applyApiMixins(targetClass: any, baseClass: any[]): void {
   baseClass.forEach((baseClass) => {
     Object.getOwnPropertyNames(baseClass.prototype).forEach((name) => {
-      const descriptor = Object.getOwnPropertyDescriptor(
-        baseClass.prototype,
-        name
-      );
+      const descriptor = Object.getOwnPropertyDescriptor(baseClass.prototype, name);
 
       if (descriptor) {
         Object.defineProperty(targetClass.prototype, name, descriptor);
