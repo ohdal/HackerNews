@@ -1,5 +1,5 @@
 import {NewsFeed, NewsDetail} from '../types'
-import {NEWS_URL, CONTENT_URL} from "../types/config"
+import {NEWS_URL, CONTENT_URL} from "../config"
 
 export class Api {
   // Generic & protected

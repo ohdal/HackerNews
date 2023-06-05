@@ -4,9 +4,16 @@ import View from "../core/view";
 // 그 이외에는 interface를 더 많이 사용하는 경향이 있다.
 // interface는 사용법을 봤을때 글로써 표현하여(extends) 무슨일을 하는지 더 명확히 표현한다는 장점이 있다.
 
-export interface Store {
+export interface NewsStore {
+  getAllFeeds: () => NewsFeed[];
+  getFeed: (position: number) => NewsFeed;
+  setFeeds: (feeds: NewsFeed[]) => void;
+  makeRead: (id: number) => void;
+  hasFeeds: boolean;
   currentPage: number;
-  feed: NewsFeed[];
+  numberOfFeed: number;
+  nextPage: number;
+  prevPage: number;
 }
 
 export interface News {

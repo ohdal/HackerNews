@@ -1,16 +1,15 @@
 import View from "../core/view";
 import { NewsFeedApi } from "../core/api";
-import { NewsFeed } from "../types";
-
-const store = window.store;
+import { NewsFeed, NewsStore } from "../types";
 
 export default class NewsFeedView extends View {
   private api: NewsFeedApi;
   private feeds: NewsFeed[];
   private totalPages: number;
   private pageSize: number;
+  private store: NewsStore;
 
-  constructor(containerId: string) {
+  constructor(containerId: string, store: NewsStore) {
     let template = `
     <div class="bg-gray-600 min-h-screen">
     <div class="bg-white text-xl">
@@ -34,13 +33,14 @@ export default class NewsFeedView extends View {
 
     super(containerId, template);
     this.api = new NewsFeedApi();
-    this.feeds = store.feed;
+    this.store = store;
+    this.feeds = this.store.getAllFeeds();
     this.totalPages = 1;
     this.pageSize = 10;
-
-    if (this.feeds.length === 0) {
-      store.feed = this.feeds = this.api.getData();
-      this.makeFeeds();
+    
+    if (!this.store.hasFeeds) {
+      this.store.setFeeds(this.api.getData());
+      this.feeds = this.store.getAllFeeds();
     }
 
     this.totalPages =
@@ -49,8 +49,8 @@ export default class NewsFeedView extends View {
   }
 
   render() {
-    store.currentPage = Number(location.hash.substring(7)) || 1;
-    let page = store.currentPage - 1;
+    this.store.currentPage = Number(location.hash.substring(7)) || 1;
+    let page = this.store.currentPage - 1;
 
     for (let i = page * this.pageSize; i < (page + 1) * this.pageSize; i++) {
       const { id, title, comments_count, user, points, time_ago, read } = this.feeds[i];
@@ -80,27 +80,21 @@ export default class NewsFeedView extends View {
     this.setTemplatedata("news_feed", this.getHtml());
     this.setTemplatedata(
       "prev_page",
-      `<a href="#/page/${store.currentPage - 1}" class="${
-        store.currentPage > 1
+      `<a href="#/page/${this.store.prevPage}" class="${
+        this.store.currentPage > 1
           ? "text-gray-500"
           : "pointer-events-none text-gray-200"
       }">Previous</a>`
     );
     this.setTemplatedata(
       "next_page",
-      `<a href="#/page/${store.currentPage + 1}" class="ml-4 ${
-        store.currentPage < this.totalPages
+      `<a href="#/page/${this.store.nextPage}" class="ml-4 ${
+        this.store.currentPage < this.totalPages
           ? "text-gray-500"
           : "pointer-events-none text-gray-200"
       }">Next</a>`
     );
 
     this.updateView();
-  }
-
-  private makeFeeds(): void {
-    for (let i = 0; i < this.feeds.length; i++) {
-      this.feeds[i].read = false;
-    }
   }
 }
