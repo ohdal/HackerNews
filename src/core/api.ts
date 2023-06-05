@@ -14,15 +14,15 @@ export class Api {
 }
 
 export class NewsFeedApi {
-  getData(cb: (data: NewsFeed[]) => void): NewsFeed[] {
+  getData(cb: (data: NewsFeed[]) => void): void {
     this.printHello();
-    return this.getRequest<NewsFeed[]>(NEWS_URL, cb);
+    this.getRequest<NewsFeed[]>(NEWS_URL, cb);
   }
 }
 
 export class NewsDetailApi {
-  getData(id: string, cb: (data: NewsDetail) => void): NewsDetail {
-    return this.getRequest<NewsDetail>(CONTENT_URL.replace("@id", id), cb);
+  getData(id: string, cb: (data: NewsDetail) => void): void {
+    this.getRequest<NewsDetail>(CONTENT_URL.replace("@id", id), cb);
   }
 }
 
