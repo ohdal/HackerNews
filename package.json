@@ -2,13 +2,17 @@
   "name": "hackernew",
   "version": "1.0.0",
   "description": "js + ts study project",
-  "main": "app.js",
+  "homepage": "https://ohdal.github.io/HackerNews/",
+  "source": "index.html",
   "scripts": {
+    "predeploy": "parcel build",
+    "deploy": "gh-pages -d build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "ohdal",
   "license": "ISC",
   "devDependencies": {
+    "gh-pages": "^5.0.0",
     "parcel": "^2.8.3",
     "process": "^0.11.10",
     "typescript": "^5.0.4"
