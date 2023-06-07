@@ -38,7 +38,7 @@ export default class NewsFeedView extends View {
   }
 
   async render() {
-    this.store.currentPage = Number(location.hash.substring(7));
+    this.store.currentPage = Number(location.hash.substring(7)) || 1;
 
     if (!this.store.hasFeeds) {
       this.store.setFeeds(await this.api.getData());
