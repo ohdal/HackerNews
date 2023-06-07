@@ -688,14 +688,16 @@ class NewsDetailView extends (0, _viewDefault.default) {
         this.api = new (0, _api.NewsDetailApi)();
         this.store = store;
     }
-    render() {
+    // Promise 객체를 반환하지 않지만 async 함수 이기 떄문에 
+    // return을 Promise로 감싸줘야 한다.
+    async render() {
         const id = location.hash.substring(7);
-        const newsContent = this.api.getData(id);
+        const { title , content , comments  } = await this.api.getData(id);
         this.store.makeRead(Number(id));
-        this.setTemplatedata("comments", this.makeComment(newsContent.comments));
+        this.setTemplatedata("comments", this.makeComment(comments));
         this.setTemplatedata("current_page", String(this.store.currentPage));
-        this.setTemplatedata("title", newsContent.title);
-        this.setTemplatedata("content", newsContent.content);
+        this.setTemplatedata("title", title);
+        this.setTemplatedata("content", content);
         this.updateView();
     }
     makeComment(comments) {
@@ -760,22 +762,20 @@ parcelHelpers.export(exports, "Test", ()=>Test);
 var _config = require("../config");
 class Api {
     // Generic & protected
-    getRequest(url) {
-        const ajax = new XMLHttpRequest();
-        ajax.open("GET", url, false);
-        ajax.send();
-        return JSON.parse(ajax.response);
+    async request(url) {
+        const response = await fetch(url);
+        // response.json 자체가 promise 객체를 return 하기 때문에 await을 붙여준다.
+        return await response.json();
     }
 }
 class NewsFeedApi {
-    getData() {
-        this.printHello();
-        return this.getRequest((0, _config.NEWS_URL));
+    async getData() {
+        return this.request((0, _config.NEWS_URL));
     }
 }
 class NewsDetailApi {
-    getData(id) {
-        return this.getRequest((0, _config.CONTENT_URL).replace("@id", id));
+    async getData(id) {
+        return await this.request((0, _config.CONTENT_URL).replace("@id", id));
     }
 }
 class Test {
@@ -822,38 +822,39 @@ class NewsFeedView extends (0, _viewDefault.default) {
     constructor(containerId, store){
         let template = `
     <div class="bg-gray-600 min-h-screen">
-    <div class="bg-white text-xl">
-    <div class="mx-auto px-4">
-    <div class="flex justify-between items-center py-6">
-    <div class="flex justify-start">
-    <h1 class="font-extrabold">Hacker News</h1>
-    </div>
-    <div class="item-center justify-end">
-    {{__prev_page__}}
-    {{__next_page__}}
-    </div>
-    </div>
-    </div>
-    </div>
-    <div class="p-4 text-2xl text-gray-700">
-    {{__news_feed__}}
-    </div>
+      <div class="bg-white text-xl">
+        <div class="mx-auto px-4">
+          <div class="flex justify-between items-center py-6">
+            <div class="flex justify-start">
+              <h1 class="font-extrabold">Hacker News</h1>
+            </div>
+            <div class="item-center justify-end">
+              {{__prev_page__}}
+              {{__next_page__}}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-4 text-2xl text-gray-700">
+        {{__news_feed__}}
+      </div>
     </div>
     `;
         super(containerId, template);
         this.api = new (0, _api.NewsFeedApi)();
         this.store = store;
-        this.feeds = this.store.getAllFeeds();
         this.totalPages = 1;
         this.pageSize = 10;
-        if (this.store.hasFeeds) this.store.setFeeds(this.api.getData());
-        this.totalPages = Math.floor(this.feeds.length / this.pageSize) + (this.feeds.length % this.pageSize > 0 ? 1 : 0);
     }
-    render() {
-        this.store.currentPage = Number(location.hash.substring(7)) || 1;
+    async render() {
+        this.store.currentPage = Number(location.hash.substring(7));
+        if (!this.store.hasFeeds) {
+            this.store.setFeeds(await this.api.getData());
+            this.totalPages = Math.floor(this.store.numberOfFeed / this.pageSize) + (this.store.numberOfFeed % this.pageSize > 0 ? 1 : 0);
+        }
         let page = this.store.currentPage - 1;
         for(let i = page * this.pageSize; i < (page + 1) * this.pageSize; i++){
-            const { id , title , comments_count , user , points , time_ago , read  } = this.feeds[i];
+            const { id , title , comments_count , user , points , time_ago , read  } = this.store.getFeed(i);
             this.addHtml(`
       <div class="p-6 ${read ? "bg-red" : "bg-white"} mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
       <div class="flex">
@@ -921,10 +922,8 @@ class Store {
             }));
     }
     makeRead(id) {
-    // const feed = this.feeds.find((feed: NewsFeed) => feed.id === id);
-    // if(feed) {
-    //   feed.read = true;
-    // }
+        const feed = this.feeds.find((feed)=>feed.id === id);
+        if (feed) feed.read = true;
     }
 }
 exports.default = Store;

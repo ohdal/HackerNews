@@ -892,7 +892,7 @@ class NewsFeedView extends (0, _viewDefault.default) {
         this.pageSize = 10;
     }
     async render() {
-        this.store.currentPage = Number(location.hash.substring(7));
+        this.store.currentPage = Number(location.hash.substring(7)) || 1;
         if (!this.store.hasFeeds) {
             this.store.setFeeds(await this.api.getData());
             this.totalPages = Math.floor(this.store.numberOfFeed / this.pageSize) + (this.store.numberOfFeed % this.pageSize > 0 ? 1 : 0);
